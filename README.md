@@ -35,7 +35,6 @@ packages/adapters  TradeLocker, Match-Trader, simulator adapters
 bridges/mql4|mql5  Expert Advisor bridges for MetaTrader terminals
 deploy/            Caddyfile (TLS)
 docs/              Architecture, deployment, protocols, platform notes, test results
-legacy/            Previous unrelated single-page app (not used)
 ```
 
 ## Quick start (local, simulation)
