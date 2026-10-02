@@ -123,6 +123,7 @@ export class BridgeHub {
         tag: p.comment,
         magic: p.magic,
         orderId: p.orderTicket ?? null,
+        replacesId: p.fromTicket ?? null,
         profit: p.profit ?? null,
       })),
       orders: sync.orders.map((o) => ({

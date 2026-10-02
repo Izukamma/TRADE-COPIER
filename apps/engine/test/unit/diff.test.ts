@@ -60,3 +60,17 @@ describe("master snapshot diff", () => {
     expect(r.events[0]!.payload).toMatchObject({ type: "POSITION_INCREASED", previousVolume: 1, volume: 2 });
   });
 });
+
+describe("MT4 partial close (remainder gets a new ticket)", () => {
+  it("is a partial close of the original trade, not close + new open", () => {
+    const r = diffSnapshots(snap([pos("100", { volume: 1 })]), snap([pos("101", { volume: 0.4, replacesId: "100" })]), { version: 1, aliases: {} }, none);
+    expect(r.events.map((e) => e.payload.type)).toEqual(["POSITION_PARTIALLY_CLOSED"]);
+    expect(r.events[0]!.payload).toMatchObject({ masterKey: "100", positionId: "101", previousVolume: 1, volume: 0.4 });
+    const r2 = diffSnapshots(snap([pos("101", { volume: 0.4, replacesId: "100" })]), snap([]), r.state, none);
+    expect(r2.events[0]!.payload).toMatchObject({ type: "POSITION_CLOSED", masterKey: "100" });
+  });
+  it("excludes copier magic numbers even when the comment was rewritten", () => {
+    const r = diffSnapshots(snap([]), snap([pos("7", { tag: "from #6", magic: 7710001 })]), { version: 0, aliases: {} }, (t) => t.magic === 7710001);
+    expect(r.events).toHaveLength(0);
+  });
+});

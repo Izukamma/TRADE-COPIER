@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { copyLinks, masterEvents, masterSnapshots, type Db } from "@gtc/db";
-import { isCopierTag, type TradingSnapshot } from "@gtc/shared";
+import { COPIER_MAGIC, isCopierTag, type TradingSnapshot } from "@gtc/shared";
 import { diffSnapshots } from "./diff";
 import type { Log } from "./logger";
 
@@ -45,7 +45,7 @@ export class MasterWatcher {
       .from(copyLinks)
       .where(and(eq(copyLinks.followerAccountId, accountId)));
     const linkedIds = new Set(linked.flatMap((l) => [l.p, l.o]).filter((x): x is string => !!x));
-    const exclude = (t: { id: string; tag: string | null }) => isCopierTag(t.tag) || linkedIds.has(t.id);
+    const exclude = (t: { id: string; tag: string | null; magic?: number | null }) => isCopierTag(t.tag) || linkedIds.has(t.id) || t.magic === COPIER_MAGIC;
 
     const { events, state } = diffSnapshots(stored.snapshot, snap, { version: stored.version, aliases: stored.aliases }, exclude);
     await this.db.transaction(async (tx) => {

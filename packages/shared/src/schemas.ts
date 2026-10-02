@@ -200,6 +200,8 @@ export const bridgePositionSchema = z.object({
   magic: z.number().int().nullable(),
   profit: num.nullable().optional(),
   orderTicket: z.string().max(32).nullable().optional(),
+  /** MT4 partial close: the ticket this remainder position replaced ("from #123"). */
+  fromTicket: z.string().max(32).nullable().optional(),
 });
 
 export const bridgeOrderSchema = z.object({

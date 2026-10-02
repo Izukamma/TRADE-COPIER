@@ -16,6 +16,7 @@ import {
 import {
   accountRiskSchema,
   clientIdFor,
+  COPIER_MAGIC,
   followerSettingsSchema,
   isCopierTag,
   roundTo,
@@ -37,7 +38,6 @@ const MAX_RETRYABLE_ATTEMPTS = 3;
 const MAX_EXIT_WAIT_ATTEMPTS = 60;
 const MAX_RECONCILE_ATTEMPTS = 5;
 const MAX_FILL_CHECKS = 10;
-const DEFAULT_MAGIC = 7_710_001;
 
 export interface ExecutorStats {
   processed: number;
@@ -208,7 +208,7 @@ export class Executor {
         snapshot: follower.snapshot,
         snapshotAgeMs: follower.snapshotAt ? Date.now() - follower.snapshotAt : null,
         risk,
-        magic: DEFAULT_MAGIC,
+        magic: COPIER_MAGIC,
       },
       master: {
         equity: master?.snapshot?.account.equity ?? master?.row.equity ?? null,
@@ -361,9 +361,11 @@ export class Executor {
           await this.db.update(copyLinks).set({ status: "CLOSED", followerVolumeCurrent: 0, masterVolumeCurrent: ev?.payload.volume ?? 0, closedAt: now, updatedAt: now }).where(eq(copyLinks.id, mlink.id));
         } else {
           const closed = o.filledVolume ?? cmd.volume;
+          // MT4 gives the remainder a new ticket; follow it so later closes target the right position.
+          const remainderId = o.positionId && o.positionId !== cmd.positionId ? o.positionId : mlink.followerPositionId;
           await this.db
             .update(copyLinks)
-            .set({ followerVolumeCurrent: roundTo(Math.max(0, mlink.followerVolumeCurrent - closed), 8), masterVolumeCurrent: ev?.payload.volume ?? mlink.masterVolumeCurrent, updatedAt: now })
+            .set({ followerPositionId: remainderId, followerVolumeCurrent: roundTo(Math.max(0, mlink.followerVolumeCurrent - closed), 8), masterVolumeCurrent: ev?.payload.volume ?? mlink.masterVolumeCurrent, updatedAt: now })
             .where(eq(copyLinks.id, mlink.id));
         }
       }
@@ -418,9 +420,10 @@ export class Executor {
     const follower = this.conn.runtimes.get(job.followerAccountId)!;
     try {
       const snap = await follower.adapter!.getSnapshot();
-      const pos = snap.positions.find((p) => p.id === cmd.positionId);
       const link = await this.db.query.copyLinks.findFirst({ where: and(eq(copyLinks.followerAccountId, job.followerAccountId), eq(copyLinks.followerPositionId, cmd.positionId!)) });
+      const pos = snap.positions.find((p) => p.id === cmd.positionId) ?? snap.positions.find((p) => p.replacesId === cmd.positionId);
       if (!pos) return { found: true, conclusive: true, filled: true, detail: "position fully closed" };
+      if (pos.id !== cmd.positionId && link) return { found: true, conclusive: true, filled: true, positionId: pos.id, filledVolume: roundTo(link.followerVolumeCurrent - pos.volume, 8) };
       if (!link) return { found: false, conclusive: false, detail: "link missing" };
       // The link volume is updated only after confirmation, so compare against it.
       const expected = roundTo(link.followerVolumeCurrent - (cmd.volume ?? 0), 8);

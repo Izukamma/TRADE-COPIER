@@ -29,7 +29,7 @@ export function diffSnapshots(
   prev: TradingSnapshot,
   next: TradingSnapshot,
   state: DiffState,
-  exclude: (t: { id: string; tag: string | null }) => boolean,
+  exclude: (t: { id: string; tag: string | null; magic?: number | null }) => boolean,
 ): { events: DetectedEvent[]; state: DiffState } {
   const v = state.version + 1;
   const aliases = { ...state.aliases };
@@ -78,9 +78,25 @@ export function diffSnapshots(
     ...extra,
   });
 
+  // MT4 partial close: the remainder appears under a new ticket that names the old one.
+  // Treat it as a partial close of the original trade and keep the original master key.
+  const replaced = new Set<string>();
+  for (const p of nextPos.values()) {
+    if (prevPos.has(p.id) || !p.replacesId) continue;
+    const old = prevPos.get(p.replacesId);
+    if (!old || nextPos.has(old.id)) continue;
+    replaced.add(old.id);
+    aliases[p.id] = keyOf(old);
+    delete aliases[old.id];
+    if (p.volume < old.volume - EPS)
+      events.push({ eventKey: `partial:${old.id}:${p.id}`, payload: posPayload(p, "POSITION_PARTIALLY_CLOSED", { previousVolume: old.volume, masterKey: aliases[p.id] }), platformTime: null });
+    if (!levelsEqual(old.sl, p.sl) || !levelsEqual(old.tp, p.tp))
+      events.push({ eventKey: `modify:${p.id}:v${v}`, payload: posPayload(p, "POSITION_MODIFIED", { masterKey: aliases[p.id] }), platformTime: null });
+  }
+
   // New positions (and pending fills).
   for (const p of nextPos.values()) {
-    if (prevPos.has(p.id)) continue;
+    if (prevPos.has(p.id) || (p.replacesId && replaced.has(p.replacesId))) continue;
     // A vanished pending order that produced this position: same id/orderId, or same symbol/side/volume.
     const source =
       vanishedOrders.find((o) => !filledOrderIds.has(o.id) && (o.id === p.id || o.id === p.orderId)) ??
@@ -126,7 +142,7 @@ export function diffSnapshots(
 
   // Closed positions.
   for (const p of prevPos.values()) {
-    if (nextPos.has(p.id)) continue;
+    if (nextPos.has(p.id) || replaced.has(p.id)) continue;
     events.push({ eventKey: `close:${p.id}:v${v}`, payload: posPayload(p, "POSITION_CLOSED", { previousVolume: p.volume, volume: 0 }), platformTime: null });
     delete aliases[p.id];
   }

@@ -1,0 +1,67 @@
+# Gabriel Trade Copier — PostgreSQL + engine + dashboard behind Caddy (automatic HTTPS).
+# The engine runs continuously and independently of the dashboard and any browser.
+name: gtc
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gtc
+      POSTGRES_USER: gtc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gtc -d gtc"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [internal]
+
+  engine:
+    build: { context: ., target: engine }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://gtc:${POSTGRES_PASSWORD}@db:5432/gtc
+      BRIDGE_HOST: 0.0.0.0
+      BRIDGE_PORT: "8787"
+    depends_on:
+      db: { condition: service_healthy }
+    stop_grace_period: 30s
+    networks: [internal]
+
+  web:
+    build: { context: ., target: web }
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://gtc:${POSTGRES_PASSWORD}@db:5432/gtc
+    depends_on:
+      db: { condition: service_healthy }
+      engine: { condition: service_started }
+    networks: [internal]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      GTC_DOMAIN: ${GTC_DOMAIN:?set GTC_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web, engine]
+    networks: [internal]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  internal:

@@ -23,3 +23,6 @@ export function clientIdFromTag(tag: string | null | undefined): string | null {
   const id = tag!.trim().slice(TAG_PREFIX.length, TAG_PREFIX.length + 12).toLowerCase();
   return /^[0-9a-z]{12}$/.test(id) ? id : null;
 }
+
+/** Magic number on copier-placed MetaTrader orders (comments can be altered by brokers). */
+export const COPIER_MAGIC = 7_710_001;

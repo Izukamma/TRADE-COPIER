@@ -112,6 +112,8 @@ export interface Position {
   magic?: number | null;
   /** Originating order id when known (needed to connect fills of pending orders). */
   orderId?: string | null;
+  /** MT4: ticket this position replaced after a partial close (remainder gets a new ticket). */
+  replacesId?: string | null;
   profit?: number | null;
 }
 
