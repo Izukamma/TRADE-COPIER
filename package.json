@@ -1,0 +1,26 @@
+{
+  "name": "gabriel-trade-copier",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev:web": "pnpm --filter @gtc/web dev",
+    "dev:engine": "pnpm --filter @gtc/engine dev",
+    "build": "pnpm --filter @gtc/web build",
+    "typecheck": "pnpm -r --parallel typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration",
+    "db:generate": "pnpm --filter @gtc/db generate",
+    "db:migrate": "pnpm --filter @gtc/db migrate",
+    "owner:create": "pnpm --filter @gtc/web owner:create",
+    "keys:generate": "tsx scripts/generate-keys.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "tsx": "^4.20.0",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
