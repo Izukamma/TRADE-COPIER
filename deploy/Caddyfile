@@ -1,0 +1,23 @@
+# TLS terminates here (Let's Encrypt). Only the dashboard and the bridge endpoint are exposed.
+{$GTC_DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains"
+		-Server
+	}
+	# MetaTrader bridges (signed device-token requests)
+	handle /bridge/* {
+		reverse_proxy engine:8787
+	}
+	handle /healthz {
+		respond 404
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+	log {
+		output stdout
+		format json
+		# Never log request headers (device token ids/signatures) or bodies.
+	}
+}
