@@ -24,7 +24,7 @@ const schema = z.object({
   MATCHTRADER_PATH_PARTIAL_CLOSE: z.string().optional(),
   MATCHTRADER_PATH_ACTIVE_ORDERS: z.string().optional(),
   SIM_POLL_MS: z.coerce.number().int().min(100).default(500),
-  FOLLOWER_REFRESH_MS: z.coerce.number().int().min(500).default(5000),
+  FOLLOWER_REFRESH_MS: z.coerce.number().int().min(100).default(5000),
   EXECUTOR_CONCURRENCY: z.coerce.number().int().min(1).max(64).default(8),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   LOG_RETENTION_DAYS: z.coerce.number().int().min(1).default(14),

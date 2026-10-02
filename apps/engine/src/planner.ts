@@ -350,7 +350,8 @@ export function partialCloseVolume(
   // which rounds the closed quantity up within the follower's position.
   let remaining = floorToStep(target, spec.volumeStep);
   let note = `master closed ${roundTo(closedFraction * 100, 2)}%; follower target remaining ${roundTo(target, 6)} -> ${remaining}`;
-  if (remaining > 0 && remaining < spec.volumeMin - 1e-12) {
+  // Master still holds part of the position but the follower remainder is below the minimum.
+  if (target > 1e-12 && remaining < spec.volumeMin - 1e-12) {
     if (remainder === "KEEP_MIN") {
       remaining = spec.volumeMin;
       note += ` (kept minimum ${spec.volumeMin})`;
