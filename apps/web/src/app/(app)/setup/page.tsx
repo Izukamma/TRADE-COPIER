@@ -15,7 +15,7 @@ export default function SetupPage() {
             <li>Copy <code>.env.example</code> to <code>.env</code>, run <code>pnpm keys:generate</code> and paste the generated values. Keep <code>.env</code> out of version control; the encryption key must never live in the database.</li>
             <li>Set <code>OWNER_EMAIL</code>, <code>BETTER_AUTH_URL</code> (public HTTPS URL), <code>PUBLIC_BRIDGE_URL</code> and your domain in <code>deploy/Caddyfile</code>.</li>
             <li><code>docker compose up -d --build</code> starts PostgreSQL, the engine (runs migrations) and the dashboard behind Caddy (automatic HTTPS).</li>
-            <li>Create the single owner: <code>docker compose exec web node apps/web/scripts/create-owner.mjs</code> (prompts for the password; never paste it into chat or tickets).</li>
+            <li>Create the single owner: <code>docker compose exec -w /app/apps/web engine /app/node_modules/.bin/tsx scripts/create-owner.ts</code> (prompts for the password; never paste it into chat or tickets).</li>
             <li>Sign in, then enable two-factor under Settings.</li>
           </ol>
           <p>

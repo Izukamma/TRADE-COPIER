@@ -278,4 +278,55 @@ describe("copying pipeline (simulation)", () => {
     const j = await until(async () => (await jobs(h!)).find((x) => x.state === "REJECTED"), 10_000);
     expect(j.reason).toMatch(/netting/);
   });
+
+  it("daily loss limit pauses new entries while exits continue", async () => {
+    h = await freshDb();
+    const s = await seedSim(h);
+    const { tradingAccounts } = await import("@gtc/db");
+    const { accountRiskSchema } = await import("@gtc/shared");
+    const e = startEngine(h);
+    engines.push(e);
+    await e.start();
+    await ready(e, s);
+    const m = sim(e, s.master);
+    const o = m.openMarket("US30", "BUY", 1, null, null, null) as { position: { id: string } };
+    await until(async () => (await links(h!)).find((l) => l.status === "OPEN"), 10_000);
+    // Configure a 1 GBP limit, then lose more than that on the follower.
+    const risk = accountRiskSchema.parse({ dailyLoss: { enabled: true, limitType: "AMOUNT", limitValue: 1, basis: "EQUITY" } });
+    await h.db.update(tradingAccounts).set({ riskConfig: risk }).where(eq(tradingAccounts.id, s.follower));
+    await e.reload();
+    await e.risk.evaluate();
+    const f = sim(e, s.follower);
+    f.setMid("DJ30.cash", f.state.prices["DJ30.cash"]!.mid - 200);
+    await until(async () => {
+      await e.risk.evaluate();
+      return e.risk.dailyLossBreached(s.follower);
+    }, 10_000, "breach");
+    m.openMarket("XAUUSD", "BUY", 0.2, null, null, null);
+    const skipped = await until(async () => (await jobs(h!)).find((j) => j.state === "SKIPPED" && j.reason?.includes("daily loss")), 10_000, "entry skipped");
+    expect(skipped.eventType).toBe("POSITION_OPENED");
+    m.closePosition(o.position.id);
+    await until(async () => (await links(h!)).find((l) => l.status === "CLOSED"), 10_000, "exit still copied");
+  });
+
+  it("close copier positions closes only copier-managed trades and pauses entries", async () => {
+    h = await freshDb();
+    const s = await seedSim(h);
+    const { controlCommands, routes } = await import("@gtc/db");
+    const e = startEngine(h);
+    engines.push(e);
+    await e.start();
+    await ready(e, s);
+    const f = sim(e, s.follower);
+    const manual = f.openMarket("EURUSD.r", "BUY", 0.1, null, null, null) as { position: { id: string } }; // unrelated follower trade
+    sim(e, s.master).openMarket("US30", "BUY", 1, null, null, null);
+    await until(async () => (await links(h!)).find((l) => l.status === "OPEN"), 10_000);
+    await h.db.insert(controlCommands).values({ kind: "CLOSE_COPIER_POSITIONS", payload: { scope: "ROUTE", id: s.route }, requestedBy: "test" });
+    await until(async () => (await links(h!)).find((l) => l.status === "CLOSED"), 15_000, "copier position closed");
+    expect(f.state.positions.map((p) => p.id)).toEqual([manual.position.id]);
+    const r = (await h.db.select().from(routes).where(eq(routes.id, s.route)))[0]!;
+    expect(r.entriesPaused).toBe(true);
+    // Master still holds its trade; the copier does not reopen anything.
+    expect(sim(e, s.master).state.positions).toHaveLength(1);
+  });
 });

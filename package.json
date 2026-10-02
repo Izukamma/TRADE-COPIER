@@ -18,7 +18,9 @@
     "db:migrate": "pnpm --filter @gtc/db migrate",
     "owner:create": "pnpm --filter @gtc/web owner:create",
     "keys:generate": "tsx scripts/generate-keys.ts",
-    "sim:seed": "tsx scripts/seed-simulation.ts"
+    "sim:seed": "tsx scripts/seed-simulation.ts",
+    "evidence": "tsx scripts/export-evidence.ts",
+    "e2e:ui": "node scripts/e2e/ui-simulation-flow.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
