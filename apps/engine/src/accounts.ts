@@ -69,6 +69,9 @@ export class ConnectionManager {
       seen.add(row.id);
       const rt = this.runtimes.get(row.id);
       if (rt && rt.row.updatedAt.getTime() === row.updatedAt.getTime()) {
+        // Becoming a master: take the baseline snapshot immediately so the window in which a new
+        // trade would be mistaken for a pre-existing position is as short as possible.
+        if (!rt.isMaster && masterIds.has(row.id)) rt.nextRefreshAt = 0;
         rt.isMaster = masterIds.has(row.id);
         rt.row = row;
         continue;

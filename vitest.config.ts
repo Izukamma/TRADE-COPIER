@@ -1,9 +1,14 @@
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+
+const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
+const alias = { "@": r("./apps/web/src"), "server-only": r("./apps/web/test/server-only-stub.ts") };
 
 export default defineConfig({
   test: {
     projects: [
       {
+        resolve: { alias },
         test: {
           name: "unit",
           include: ["packages/*/test/**/*.test.ts", "apps/engine/test/unit/**/*.test.ts", "apps/web/test/unit/**/*.test.ts"],
@@ -11,6 +16,7 @@ export default defineConfig({
         },
       },
       {
+        resolve: { alias },
         test: {
           name: "integration",
           include: ["apps/engine/test/integration/**/*.test.ts", "apps/web/test/integration/**/*.test.ts"],

@@ -87,6 +87,9 @@ export const twoFactor = pgTable("two_factor", {
   id: text("id").primaryKey(),
   secret: text("secret").notNull(),
   backupCodes: text("backup_codes").notNull(),
+  verified: boolean("verified").default(true),
+  failedVerificationCount: integer("failed_verification_count").default(0),
+  lockedUntil: ts("locked_until"),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
