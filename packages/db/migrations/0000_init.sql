@@ -232,6 +232,7 @@ CREATE TABLE "master_events" (
 	"type" text NOT NULL,
 	"payload" jsonb NOT NULL,
 	"source" text NOT NULL,
+	"target_route_id" uuid,
 	"platform_time" timestamp with time zone,
 	"detected_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"routed_at" timestamp with time zone
@@ -241,6 +242,8 @@ CREATE TABLE "master_snapshots" (
 	"account_id" uuid PRIMARY KEY NOT NULL,
 	"snapshot" jsonb NOT NULL,
 	"baseline_ids" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"version" integer DEFAULT 0 NOT NULL,
+	"aliases" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"baseline_taken_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );

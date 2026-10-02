@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev:web": "pnpm --filter @gtc/web dev",
     "dev:engine": "pnpm --filter @gtc/engine dev",
@@ -15,12 +17,18 @@
     "db:generate": "pnpm --filter @gtc/db generate",
     "db:migrate": "pnpm --filter @gtc/db migrate",
     "owner:create": "pnpm --filter @gtc/web owner:create",
-    "keys:generate": "tsx scripts/generate-keys.ts"
+    "keys:generate": "tsx scripts/generate-keys.ts",
+    "sim:seed": "tsx scripts/seed-simulation.ts"
   },
   "devDependencies": {
     "@types/node": "^22.18.0",
     "tsx": "^4.20.0",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
+  },
+  "dependencies": {
+    "@gtc/db": "workspace:*",
+    "@gtc/shared": "workspace:*",
+    "drizzle-orm": "^0.45.0"
   }
 }

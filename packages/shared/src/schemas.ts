@@ -59,8 +59,11 @@ export const followerSettingsSchema = z.object({
   copyFullCloses: z.boolean().default(true),
   /** Reject entries whose master open time is older than this. */
   maxEntryAgeSeconds: z.number().int().min(1).max(3600).default(30),
-  /** Reject when follower quote deviates from master entry by more than this many points of follower tick size. */
-  maxEntryDeviationPoints: z.number().min(0).max(1_000_000).default(50),
+  /**
+   * Reject when the follower quote deviates from the master fill by more than this many follower
+   * ticks. null disables the check (required for followers without a quotes endpoint).
+   */
+  maxEntryDeviationPoints: z.number().min(0).max(10_000_000).nullable().default(5000),
   /** Which master trades to copy. */
   sourceFilter: z
     .object({
@@ -177,6 +180,8 @@ export const bridgeSymbolSchema = z.object({
   stopsLevelPoints: z.number().int().min(0),
   freezeLevelPoints: z.number().int().min(0).default(0),
   tradeAllowed: z.boolean(),
+  /** Margin for 1 lot in account currency (OrderCalcMargin / MODE_MARGINREQUIRED). */
+  marginPerLot: num.nonnegative().optional(),
   bid: num.nonnegative().optional(),
   ask: num.nonnegative().optional(),
   quoteTime: z.number().int().optional(),
@@ -230,6 +235,11 @@ export const bridgeSyncSchema = z.object({
   serverTime: z.number().int(),
   positions: z.array(bridgePositionSchema).max(1000),
   orders: z.array(bridgeOrderSchema).max(1000),
+  /** Quotes for the watch list the engine returned in its last response. */
+  quotes: z
+    .array(z.object({ symbol: symbolName, bid: num, ask: num, time: z.number().int() }))
+    .max(500)
+    .default([]),
   /** Optional: include on first sync and when the watch list changes. */
   symbols: z.array(bridgeSymbolSchema).max(2000).optional(),
   /** Results of commands executed since the last sync. */

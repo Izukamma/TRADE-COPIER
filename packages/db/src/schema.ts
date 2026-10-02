@@ -239,6 +239,8 @@ export const masterSnapshots = pgTable("master_snapshots", {
   snapshot: jsonb("snapshot").$type<TradingSnapshot>().notNull(),
   /** Positions present when watching started; never copied unless a route opts in. */
   baselineIds: jsonb("baseline_ids").$type<string[]>().notNull().default([]),
+  version: integer("version").notNull().default(0),
+  aliases: jsonb("aliases").$type<Record<string, string>>().notNull().default({}),
   baselineTakenAt: ts("baseline_taken_at").notNull().defaultNow(),
   updatedAt: updated(),
 });
@@ -254,7 +256,9 @@ export const masterEvents = pgTable(
     eventKey: text("event_key").notNull(),
     type: text("type").notNull(),
     payload: jsonb("payload").$type<MasterEventPayload>().notNull(),
-    source: text("source").$type<"POLL" | "STREAM" | "BRIDGE" | "SIMULATION">().notNull(),
+    source: text("source").$type<"POLL" | "STREAM" | "BRIDGE" | "SIMULATION" | "CONTROL" | "EXISTING">().notNull(),
+    /** For CONTROL/EXISTING events: the only route this event applies to. */
+    targetRouteId: uuid("target_route_id"),
     platformTime: ts("platform_time"),
     detectedAt: ts("detected_at").notNull().defaultNow(),
     routedAt: ts("routed_at"),

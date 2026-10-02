@@ -51,18 +51,24 @@ export function valuePerPriceUnit(
   fxMaxAgeMs?: number,
   now?: number,
 ): { value: number; via: string } | { value: null; reason: string } {
-  if (spec.tickValue !== null && spec.tickValue > 0 && spec.tickSize > 0 && spec.tickValueCurrency) {
+  const unverified = (f: string) => spec.missingFields.includes(f);
+  const tickPathOk = !unverified("tickValue") && !unverified("tickValueCurrency") && !unverified("tickSize");
+  const contractPathOk = !unverified("contractSize") && !unverified("profitCurrency");
+  if (tickPathOk && spec.tickValue !== null && spec.tickValue > 0 && spec.tickSize > 0 && spec.tickValueCurrency) {
     const raw = spec.tickValue / spec.tickSize;
     const k = fx.factor(spec.tickValueCurrency, targetCurrency, fxMaxAgeMs, now);
     if (k === null) return { value: null, reason: `no FX rate ${spec.tickValueCurrency}->${targetCurrency} for ${spec.symbol}` };
     return { value: raw * k, via: `tickValue ${spec.tickValue} ${spec.tickValueCurrency} / tickSize ${spec.tickSize}` };
   }
-  if (spec.contractSize !== null && spec.contractSize > 0 && spec.profitCurrency) {
+  if (contractPathOk && spec.contractSize !== null && spec.contractSize > 0 && spec.profitCurrency) {
     const k = fx.factor(spec.profitCurrency, targetCurrency, fxMaxAgeMs, now);
     if (k === null) return { value: null, reason: `no FX rate ${spec.profitCurrency}->${targetCurrency} for ${spec.symbol}` };
     return { value: spec.contractSize * k, via: `contractSize ${spec.contractSize} ${spec.profitCurrency}` };
   }
-  return { value: null, reason: `${spec.symbol}: tick value/contract size/profit currency unavailable` };
+  return {
+    value: null,
+    reason: `${spec.symbol}: tick value/contract size/profit currency unavailable or unverified (${spec.missingFields.join(", ") || "no data"}); confirm a manual spec override`,
+  };
 }
 
 export function computeFollowerVolume(input: SizingInput): SizingResult {
@@ -72,7 +78,6 @@ export function computeFollowerVolume(input: SizingInput): SizingResult {
   const fail = (reason: string): SizingResult => ({ ok: false, reason, explanation });
 
   if (!followerSpec.tradable) return fail(`${followerSpec.symbol} is not tradable on the follower`);
-
   const fVpp = valuePerPriceUnit(followerSpec, ccy, fx, input.fxMaxAgeMs, input.now);
   let desired: number;
   let hardCap = input.maxOrderLots;

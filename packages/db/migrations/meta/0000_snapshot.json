@@ -1,5 +1,5 @@
 {
-  "id": "27ce393a-3e2e-4a0f-8588-927e7d194eb4",
+  "id": "f63c183d-f481-4798-92a0-4fca7b2f167e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1792,6 +1792,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "target_route_id": {
+          "name": "target_route_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
         "platform_time": {
           "name": "platform_time",
           "type": "timestamp with time zone",
@@ -1894,6 +1900,20 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'[]'::jsonb"
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "aliases": {
+          "name": "aliases",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
         },
         "baseline_taken_at": {
           "name": "baseline_taken_at",

@@ -83,6 +83,10 @@ export interface InstrumentSpec {
   tradable: boolean;
   /** Fields the platform did not return; risk sizing refuses instruments with gaps it needs. */
   missingFields: string[];
+  /** Margin required for 1 lot in account currency, when the platform reports it. */
+  marginPerLot?: number | null;
+  /** "PLATFORM" when synchronised, "MANUAL" when the owner entered/confirmed an override. */
+  source?: "PLATFORM" | "MANUAL";
   fetchedAt: number;
 }
 
@@ -145,6 +149,11 @@ export type MasterEventType =
 
 export interface MasterEventPayload {
   type: MasterEventType;
+  /**
+   * Stable identity of the master trade across its lifetime: the originating pending order id
+   * when the position came from a copied pending order, otherwise the position id.
+   */
+  masterKey: string;
   positionId?: string;
   orderId?: string;
   symbol: string;
