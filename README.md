@@ -39,6 +39,17 @@ docs/              Architecture, deployment, protocols, platform notes, test res
 
 ## Quick start (local, simulation)
 
+Needs Node 22+, Docker Desktop (running) and Git. On Windows, run these from Git Bash.
+
+```bash
+./setup.sh    # once: installs dependencies, writes .env with fresh secrets, starts PostgreSQL
+              # in Docker, applies migrations, creates your login, seeds simulated accounts
+./start.sh    # every time: engine + dashboard → http://localhost:3000 (Ctrl+C stops both)
+```
+
+Both scripts are safe to re-run. The database runs in the `gtc-db` container
+(`docker stop gtc-db` to stop it). To do the steps by hand instead:
+
 ```bash
 pnpm install
 cp .env.example .env && pnpm keys:generate       # paste generated values into .env
