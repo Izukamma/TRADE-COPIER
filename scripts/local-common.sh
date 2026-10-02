@@ -10,16 +10,21 @@ die()  { printf '\033[1;31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 need_node() {
   command -v node >/dev/null 2>&1 || die "Node.js is not installed. Install Node 22 or newer from https://nodejs.org and run this again."
   local major
-  major="$(node -p 'process.versions.node.split(".")[0]')"
+  # tr: Windows builds of node can end the line with \r, which breaks the -ge test.
+  major="$(node -p 'process.versions.node.split(".")[0]' | tr -dc '0-9')"
   [ "$major" -ge 22 ] || die "Node $major found; Node 22 or newer is required (https://nodejs.org)."
 }
 
-# Sets PNPM to a working pnpm command, falling back to Corepack (ships with Node).
+# Sets PNPM to a working pnpm command. Without a global pnpm, runs the version pinned in
+# package.json through npx. Corepack is skipped on purpose: the copies bundled with older Node
+# releases fail with "Cannot find matching keyid" since npm rotated its signing keys.
 find_pnpm() {
   if command -v pnpm >/dev/null 2>&1; then
     PNPM="pnpm"
-  elif command -v corepack >/dev/null 2>&1; then
-    PNPM="corepack pnpm"
+  elif command -v npx >/dev/null 2>&1; then
+    local version
+    version="$(node -p 'require("./package.json").packageManager.split("@")[1]' | tr -d '\r')"
+    PNPM="npx --yes pnpm@$version"
   else
     die "pnpm is not available. Run: npm install -g pnpm"
   fi
