@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { fileURLToPath } from "node:url";
 
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
@@ -14,7 +15,7 @@ const securityHeaders = [
 
 const config: NextConfig = {
   output: "standalone",
-  outputFileTracingRoot: new URL("../../", import.meta.url).pathname,
+  outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
   transpilePackages: ["@gtc/shared", "@gtc/db"],
   serverExternalPackages: ["postgres"],
   poweredByHeader: false,
