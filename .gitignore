@@ -1,0 +1,16 @@
+node_modules/
+.next/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+.DS_Store
+.turbo/
+tsconfig.tsbuildinfo
+next-env.d.ts
+evidence/private/

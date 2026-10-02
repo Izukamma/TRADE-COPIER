@@ -1,0 +1,19 @@
+{
+  "name": "@gtc/engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@gtc/adapters": "workspace:*",
+    "@gtc/db": "workspace:*",
+    "@gtc/shared": "workspace:*",
+    "drizzle-orm": "^0.45.0",
+    "pino": "^10.0.0",
+    "zod": "^4.1.0"
+  }
+}

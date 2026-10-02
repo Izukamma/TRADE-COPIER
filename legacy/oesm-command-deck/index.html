@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Command Deck — OESM Prop Career</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A0D12;
+    --bg-elev: #0E131B;
+    --panel: #12181F;
+    --panel-2: #161D27;
+    --border: #232B37;
+    --border-soft: #1A212B;
+    --text: #E7ECF3;
+    --text-dim: #8B93A5;
+    --text-faint: #5B6479;
+    --amber: #E8A33D;
+    --amber-dim: #6B5228;
+    --cyan: #45C4D6;
+    --green: #45C98A;
+    --green-dim: #1F3A2D;
+    --red: #EE6868;
+    --red-dim: #3A2323;
+    --gold: #F2C94C;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #F4F5F7; --bg-elev: #FFFFFF; --panel: #FFFFFF; --panel-2: #F0F1F4;
+      --border: #DDE1E7; --border-soft: #E7EAEE; --text: #171A20; --text-dim: #5B6472; --text-faint: #98A1AE;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0A0D12; --bg-elev: #0E131B; --panel: #12181F; --panel-2: #161D27;
+    --border: #232B37; --border-soft: #1A212B; --text: #E7ECF3; --text-dim: #8B93A5; --text-faint: #5B6479;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    overflow: hidden;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+
+  #app { display: flex; height: 100vh; height: 100%; }
+
+  /* ---- Nav rail ---- */
+  #rail {
+    width: 76px; flex: 0 0 76px;
+    background: var(--bg-elev);
+    border-right: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0; gap: 6px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+  }
+  .rail-brand {
+    font-family: var(--font-display); font-weight: 700; font-size: 18px;
+    color: var(--amber); margin-bottom: 18px; letter-spacing: 0.02em;
+  }
+  .rail-btn {
+    width: 52px; height: 52px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 3px;
+    background: transparent; border: 1px solid transparent;
+    color: var(--text-faint); cursor: pointer; font-size: 20px;
+    transition: background .15s, color .15s, border-color .15s;
+  }
+  .rail-btn span.lbl { font-size: 8.5px; font-family: var(--font-mono); letter-spacing: 0.04em; }
+  .rail-btn:hover { background: var(--panel-2); color: var(--text-dim); }
+  .rail-btn.active { background: var(--panel-2); color: var(--amber); border-color: var(--border); }
+
+  /* ---- Main column ---- */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+  #hud {
+    display: flex; align-items: stretch; gap: 1px;
+    background: var(--border-soft);
+    border-bottom: 1px solid var(--border-soft);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .hud-cell {
+    flex: 1; background: var(--bg-elev); padding: 12px 18px; min-width: 0;
+  }
+  .hud-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; }
+  .hud-value { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--text); margin-top: 2px; }
+  .hud-sub { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); margin-top: 2px; }
+  .hud-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .hud-bar-fill { height: 100%; background: var(--amber); border-radius: 2px; transition: width .4s; }
+
+  #viewport { flex: 1; overflow: auto; position: relative; }
+  .view { display: none; padding: 28px 32px 60px; max-width: 1180px; }
+  .view.active { display: block; }
+
+  h1.page-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  p.page-sub { font-family: var(--font-body); font-size: 13.5px; color: var(--text-dim); margin: 0 0 24px; max-width: 62ch; line-height: 1.5; }
+
+  /* ---- Hub / 3D ---- */
+  #hub-view { padding: 0; max-width: none; }
+  #hub-canvas-wrap { position: relative; height: calc(100vh - 78px); }
+  #hub-canvas-wrap canvas { display: block; }
+  #hub-overlay {
+    position: absolute; top: 22px; left: 32px; pointer-events: none;
+  }
+  #hub-overlay .callsign { font-family: var(--font-display); font-size: 26px; font-weight: 600; }
+  #hub-overlay .rank { font-family: var(--font-mono); font-size: 12px; color: var(--amber); margin-top: 2px; }
+  #node-detail {
+    position: absolute; bottom: 24px; right: 32px; width: 300px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; display: none; font-size: 13px;
+  }
+  #node-detail.show { display: block; }
+  #node-detail .nd-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  #node-detail .nd-row { display: flex; justify-content: space-between; padding: 3px 0; color: var(--text-dim); font-family: var(--font-mono); font-size: 11.5px; }
+  #node-detail .nd-row b { color: var(--text); font-weight: 500; }
+
+  /* ---- Cards ---- */
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin-bottom: 14px;
+  }
+  .card-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .btn {
+    font-family: var(--font-body); font-weight: 600; font-size: 13px;
+    background: var(--amber); color: #1A1200; border: none; border-radius: 7px;
+    padding: 9px 16px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .btn.danger { background: var(--red-dim); color: var(--red); border: 1px solid var(--red-dim); }
+  .btn.small { padding: 5px 10px; font-size: 11.5px; }
+
+  input, select, textarea {
+    font-family: var(--font-body); font-size: 13.5px; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 8px 10px; width: 100%;
+  }
+  label.field-label { display: block; font-size: 11.5px; color: var(--text-dim); margin: 10px 0 4px; font-family: var(--font-mono); }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+
+  /* ---- Accounts ---- */
+  .acct-card { border-left: 3px solid var(--border); }
+  .acct-card.status-challenge { border-left-color: var(--cyan); }
+  .acct-card.status-funded { border-left-color: var(--green); }
+  .acct-card.status-failed { border-left-color: var(--red); opacity: 0.72; }
+  .acct-firm { font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+  .acct-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .status-pill {
+    font-family: var(--font-mono); font-size: 10px; padding: 3px 9px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700;
+  }
+  .status-pill.status-challenge { background: rgba(69,196,214,.14); color: var(--cyan); }
+  .status-pill.status-funded { background: rgba(69,201,138,.14); color: var(--green); }
+  .status-pill.status-failed { background: rgba(238,104,104,.14); color: var(--red); }
+  .rule-bars { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .rule-bar-row { display: flex; align-items: center; gap: 10px; }
+  .rule-bar-label { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-dim); width: 92px; flex-shrink: 0; }
+  .rule-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .rule-bar-fill { height: 100%; border-radius: 3px; }
+  .rule-bar-fill.ok { background: var(--green); }
+  .rule-bar-fill.warn { background: var(--amber); }
+  .rule-bar-fill.bad { background: var(--red); }
+  .rule-bar-num { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-faint); width: 52px; text-align: right; flex-shrink: 0; }
+
+  /* ---- Goals ---- */
+  .goal-meter { margin-bottom: 26px; }
+  .goal-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .goal-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; }
+  .goal-figs { font-family: var(--font-mono); font-size: 13px; color: var(--text-dim); }
+  .goal-figs b { color: var(--text); }
+  .goal-track { height: 14px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .goal-fill { height: 100%; border-radius: 7px 0 0 7px; transition: width .5s; }
+
+  /* ---- Achievements ---- */
+  .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 12px; }
+  .ach-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .ach-card.locked { opacity: 0.38; }
+  .ach-icon { font-size: 22px; flex-shrink: 0; width: 34px; text-align: center; }
+  .ach-name { font-family: var(--font-display); font-size: 13.5px; font-weight: 600; }
+  .ach-desc { font-family: var(--font-body); font-size: 11.5px; color: var(--text-dim); margin-top: 2px; line-height: 1.4; }
+  .ach-date { font-family: var(--font-mono); font-size: 10px; color: var(--gold); margin-top: 6px; }
+
+  /* ---- Journal ---- */
+  .journal-entry { border-bottom: 1px solid var(--border-soft); padding: 14px 0; }
+  .journal-entry:last-child { border-bottom: none; }
+  .je-date { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-faint); }
+  .je-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; margin: 3px 0 5px; }
+  .je-body { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; white-space: pre-wrap; }
+
+  /* ---- Jarvis ---- */
+  #jarvis-view { display: flex; flex-direction: column; height: calc(100vh - 78px); padding: 0; max-width: none; }
+  #jarvis-log { flex: 1; overflow-y: auto; padding: 24px 32px; }
+  .jmsg { max-width: 640px; margin-bottom: 16px; }
+  .jmsg.user { margin-left: auto; }
+  .jmsg .jbubble {
+    padding: 11px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.55; white-space: pre-wrap;
+  }
+  .jmsg.user .jbubble { background: var(--amber-dim); color: var(--text); }
+  .jmsg.assistant .jbubble { background: var(--panel); border: 1px solid var(--border); }
+  .jmsg .jlabel { font-family: var(--font-mono); font-size: 10px; color: var(--text-faint); margin-bottom: 4px; }
+  #jarvis-input-row { display: flex; gap: 10px; padding: 16px 32px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border-soft); }
+  #jarvis-input-row textarea { resize: none; height: 44px; }
+
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+
+  .empty-hint { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); padding: 30px 0; text-align: center; border: 1px dashed var(--border); border-radius: 10px; }
+  .toast {
+    position: fixed; top: calc(20px + env(safe-area-inset-top,0px)); left: 50%; transform: translateX(-50%);
+    background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
+    font-family: var(--font-mono); font-size: 12.5px; padding: 10px 18px; border-radius: 8px;
+    z-index: 999; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(6px); }
+
+  @media (max-width: 720px) {
+    #rail { width: 58px; flex-basis: 58px; }
+    .rail-btn { width: 42px; height: 42px; }
+    .view { padding: 18px 16px 60px; }
+    #hud { flex-wrap: wrap; }
+    .hud-cell { flex: 1 1 50%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="rail-brand">◈</div>
+    <button class="rail-btn active" data-view="hub"><span>🛰️</span><span class="lbl">HUB</span></button>
+    <button class="rail-btn" data-view="accounts"><span>💼</span><span class="lbl">FLEET</span></button>
+    <button class="rail-btn" data-view="goals"><span>🎯</span><span class="lbl">GOALS</span></button>
+    <button class="rail-btn" data-view="achievements"><span>🏅</span><span class="lbl">MEDALS</span></button>
+    <button class="rail-btn" data-view="journal"><span>📓</span><span class="lbl">LOG</span></button>
+    <button class="rail-btn" data-view="jarvis"><span>🤖</span><span class="lbl">JARVIS</span></button>
+  </nav>
+
+  <div id="main">
+    <div id="hud">
+      <div class="hud-cell">
+        <div class="hud-label">Total Allocation</div>
+        <div class="hud-value" id="hud-alloc">$0</div>
+        <div class="hud-sub" id="hud-alloc-sub">of $2,000,000</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="hud-alloc-bar" style="width:0%"></div></div>
+      </div>
+      <div class="hud-cell">
+        <div class="hud-label">Personal Capital</div>
+        <div class="hud-value" id="hud-personal">$0</div>
+        <div class="hud-sub" id="hud-personal-sub">of $100,000</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="hud-personal-bar" style="width:0%"></div></div>
+      </div>
+      <div class="hud-cell">
+        <div class="hud-label">Monthly Payouts</div>
+        <div class="hud-value" id="hud-payout">$0</div>
+        <div class="hud-sub" id="hud-payout-sub">of $100,000 / mo</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="hud-payout-bar" style="width:0%"></div></div>
+      </div>
+      <div class="hud-cell">
+        <div class="hud-label">Operator Level</div>
+        <div class="hud-value" id="hud-level">LV. 1</div>
+        <div class="hud-sub" id="hud-xp-sub">0 XP</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="hud-xp-bar" style="width:0%; background:var(--cyan);"></div></div>
+      </div>
+    </div>
+
+    <div id="viewport">
+
+      <!-- HUB -->
+      <div class="view active" id="hub-view">
+        <div id="hub-canvas-wrap">
+          <div id="hub-overlay">
+            <div class="callsign" id="hub-callsign">COMMAND DECK</div>
+            <div class="rank" id="hub-rank">RANK — RECRUIT · 0 ACCOUNTS DEPLOYED</div>
+          </div>
+          <div id="node-detail">
+            <div class="nd-title" id="nd-title">—</div>
+            <div class="nd-row"><span>Status</span><b id="nd-status">—</b></div>
+            <div class="nd-row"><span>Size</span><b id="nd-size">—</b></div>
+            <div class="nd-row"><span>Phase P&L</span><b id="nd-pnl">—</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCOUNTS -->
+      <div class="view" id="accounts-view">
+        <h1 class="page-title">Fleet — Prop Firm Accounts</h1>
+        <p class="page-sub">Every account you're running, its challenge rules, and live progress against them. Add a new account the moment you start a challenge.</p>
+        <button class="btn" id="add-account-btn">+ Deploy New Account</button>
+        <div id="accounts-list" style="margin-top:18px;"></div>
+      </div>
+
+      <!-- GOALS -->
+      <div class="view" id="goals-view">
+        <h1 class="page-title">Objectives</h1>
+        <p class="page-sub">The three numbers that define the mission. Allocation total is computed automatically from funded accounts below; personal capital and payouts you log yourself.</p>
+        <div class="card">
+          <div class="goal-meter">
+            <div class="goal-head"><span class="goal-name">Total Allocation</span><span class="goal-figs"><b id="g-alloc-cur">$0</b> / $2,000,000</span></div>
+            <div class="goal-track"><div class="goal-fill" id="g-alloc-fill" style="width:0%;background:var(--cyan);"></div></div>
+          </div>
+          <div class="goal-meter">
+            <div class="goal-head"><span class="goal-name">Personal Trading Capital</span><span class="goal-figs"><b id="g-personal-cur">$0</b> / $100,000</span></div>
+            <div class="goal-track"><div class="goal-fill" id="g-personal-fill" style="width:0%;background:var(--green);"></div></div>
+            <div style="margin-top:8px;"><input id="personal-input" type="number" placeholder="Update personal capital ($)" /></div>
+          </div>
+          <div class="goal-meter" style="margin-bottom:4px;">
+            <div class="goal-head"><span class="goal-name">Monthly Payout Income</span><span class="goal-figs"><b id="g-payout-cur">$0</b> / $100,000 / mo</span></div>
+            <div class="goal-track"><div class="goal-fill" id="g-payout-fill" style="width:0%;background:var(--amber);"></div></div>
+            <div class="field-grid" style="margin-top:8px;">
+              <input id="payout-amount-input" type="number" placeholder="Payout amount ($)" />
+              <input id="payout-date-input" type="date" />
+            </div>
+            <button class="btn small" id="log-payout-btn" style="margin-top:8px;">Log Payout</button>
+          </div>
+        </div>
+        <h1 class="page-title" style="font-size:16px; margin-top:26px;">Payout History</h1>
+        <div id="payout-history"></div>
+      </div>
+
+      <!-- ACHIEVEMENTS -->
+      <div class="view" id="achievements-view">
+        <h1 class="page-title">Medals</h1>
+        <p class="page-sub">Unlocked automatically as your fleet and career grow. Locked ones stay dim until you earn them.</p>
+        <div class="ach-grid" id="ach-grid"></div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div class="view" id="journal-view">
+        <h1 class="page-title">Captain's Log</h1>
+        <p class="page-sub">Document the journey — decisions, lessons, setbacks. This is your own record, not performance data.</p>
+        <div class="card">
+          <label class="field-label">Title</label>
+          <input id="journal-title-input" placeholder="What happened today?" />
+          <label class="field-label">Entry</label>
+          <textarea id="journal-body-input" rows="4" placeholder="Write freely..."></textarea>
+          <button class="btn" id="add-journal-btn" style="margin-top:12px;">Save Entry</button>
+        </div>
+        <div class="card" id="journal-list" style="margin-top:18px;"></div>
+      </div>
+
+      <!-- JARVIS -->
+      <div class="view" id="jarvis-view">
+        <div id="jarvis-log"></div>
+        <div id="jarvis-input-row">
+          <textarea id="jarvis-input" placeholder="Ask Jarvis about your fleet, goals, or the OESM strategy..."></textarea>
+          <button class="btn" id="jarvis-send-btn">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+
+/* =========================================================
+   OESM STRATEGY CONTEXT — for Jarvis
+   ========================================================= */
+var OESM_CONTEXT = "OESM (Opening Expansion / Structural Momentum) is the user's US30/Dow intraday strategy. " +
+  "Session structure: 08:30-09:00 CT is an Opening Observation window that records the session's opening range " +
+  "(high/low/open). 09:00-11:00 CT is the Execution window. The engine measures whether the opening expansion is " +
+  "bullish or bearish (comparing the up-move vs down-move from the 8:30 open). It then looks for EXH-W (exhaustion " +
+  "warning) evidence: contracting candle bodies, weakening directional progress, failure to extend the high/low, " +
+  "and rejection wicks -- needing at least 2 of 4 signals. After a warning, price must show a 'meaningful extension' " +
+  "(0.2x ATR beyond the warning level) and then either gain ACCEPTANCE (2+ closes beyond a boundary -> CONT-A, a " +
+  "continuation trade in the direction of the original expansion) or fail and instead show REVERSAL evidence " +
+  "(opposing displacement, opposing rejection wick, and a structure break -> REV-A, a reversal trade against the " +
+  "original expansion). The strategy allows a maximum of 2 trades per session: trade 1 fires on the first " +
+  "acceptance; if it's a loss, the engine resets and searches for a second, independent setup; if trade 1 wins, " +
+  "the session is done. Historical backtesting on a year of 1-min DJI data (as a US30 proxy) showed the classic " +
+  "35pt-target/variable-stop version nets modestly positive with a ~35% win rate and profit factor ~1.4. A wider, " +
+  "fixed-stop variant (35pt stop, ~200pt target) showed meaningfully better results and held up across quarterly " +
+  "splits, at the cost of more drawdown and a lower win rate (~30%). The user also trades this partly " +
+  "discretionarily -- OESM's coded rules are a patience/confirmation layer, not a fully automatic signal generator; " +
+  "final entries are the user's own judgment call, informed by but not dictated by the coded state machine.";
+
+var PROP_FARMING_CONTEXT = "Prop firm trading ('prop farming') means passing evaluation challenges at proprietary " +
+  "trading firms (each with a profit target, a max drawdown limit, a daily loss limit, and often a minimum trading " +
+  "days requirement and a 'consistency' rule capping how much of total profit can come from a single day) to earn " +
+  "a funded account, then trading that funded account for a split of the profits via periodic payouts. Growing a " +
+  "prop career typically means running multiple accounts across multiple firms in parallel to diversify risk of any " +
+  "single firm's rule violations, reinvesting challenge fees and payouts into new accounts, and gradually scaling " +
+  "total allocation while building independent personal trading capital as a longer-term hedge against reliance on " +
+  "any prop firm.";
+
+var ACHIEVEMENTS = [
+  {id:'first_account', icon:'🚀', name:'First Deployment', desc:'Added your first prop firm account.', test:function(s){return s.accounts.length>=1;}},
+  {id:'first_pass', icon:'✅', name:'Cleared the Gate', desc:'Passed a challenge phase for the first time.', test:function(s){return s.accounts.some(function(a){return a.status==='funded'||a.phase==='p2';});}},
+  {id:'first_funded', icon:'💼', name:'Funded', desc:'Got your first funded account.', test:function(s){return s.accounts.some(function(a){return a.status==='funded';});}},
+  {id:'five_accounts', icon:'🛰️', name:'Small Fleet', desc:'Managing 5 accounts at once.', test:function(s){return s.accounts.length>=5;}},
+  {id:'ten_accounts', icon:'🌌', name:'Full Constellation', desc:'Managing 10 accounts at once.', test:function(s){return s.accounts.length>=10;}},
+  {id:'resilient', icon:'🔁', name:'Resilient', desc:'Deployed a new account after a failure.', test:function(s){
+      if(!s.accounts.some(function(a){return a.status==='failed';})) return false;
+      return s.accounts.length>=2;
+  }},
+  {id:'first_payout', icon:'💸', name:'First Payout', desc:'Logged your first payout.', test:function(s){return (s.goals.payoutHistory||[]).length>=1;}},
+  {id:'alloc_100k', icon:'🥉', name:'$100K Allocation', desc:'Total funded allocation crossed $100,000.', test:function(s){return s.allocTotal>=100000;}},
+  {id:'alloc_500k', icon:'🥈', name:'$500K Allocation', desc:'Total funded allocation crossed $500,000.', test:function(s){return s.allocTotal>=500000;}},
+  {id:'alloc_1m', icon:'🥇', name:'$1M Allocation', desc:'Total funded allocation crossed $1,000,000.', test:function(s){return s.allocTotal>=1000000;}},
+  {id:'alloc_2m', icon:'🏆', name:'$2M — Mission Complete', desc:'Reached the full $2,000,000 allocation goal.', test:function(s){return s.allocTotal>=2000000;}},
+  {id:'personal_25k', icon:'🪙', name:'$25K Personal', desc:'Personal trading capital reached $25,000.', test:function(s){return (s.goals.personalCapitalCurrent||0)>=25000;}},
+  {id:'personal_100k', icon:'💰', name:'$100K Personal', desc:'Reached the $100,000 personal capital goal.', test:function(s){return (s.goals.personalCapitalCurrent||0)>=100000;}},
+  {id:'payout_10k', icon:'📈', name:'$10K / mo Payouts', desc:'Monthly payout run-rate reached $10,000.', test:function(s){return s.payoutMTD>=10000;}},
+  {id:'payout_50k', icon:'📊', name:'$50K / mo Payouts', desc:'Monthly payout run-rate reached $50,000.', test:function(s){return s.payoutMTD>=50000;}},
+  {id:'payout_100k', icon:'👑', name:'$100K / mo — Endgame', desc:'Reached the $100,000/month payout goal.', test:function(s){return s.payoutMTD>=100000;}},
+  {id:'journal_10', icon:'📓', name:'Disciplined Logger', desc:'Wrote 10 journal entries.', test:function(s){return s.journal.length>=10;}}
+];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+var state = { accounts: [], goals: { allocationTarget:2000000, personalCapitalTarget:100000, monthlyPayoutTarget:100000, personalCapitalCurrent:0, payoutHistory:[] }, journal: [], achievementsUnlocked: {} };
+var db=null, userCap=null, sampleCap=null, uid=null;
+var jarvisTurns = [];
+
+function fmtMoney(n){
+  n = Number(n)||0;
+  return '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
+}
+function computeAllocTotal(){
+  return state.accounts.filter(function(a){return a.status==='funded';}).reduce(function(sum,a){return sum+(Number(a.size)||0);},0);
+}
+function computePayoutMTD(){
+  var now = new Date();
+  var ym = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  return (state.goals.payoutHistory||[]).filter(function(p){return (p.date||'').slice(0,7)===ym;}).reduce(function(s,p){return s+(Number(p.amount)||0);},0);
+}
+function computeXP(){
+  var xp = 0;
+  state.accounts.forEach(function(a){
+    xp += 50;
+    if(a.phase==='p2') xp += 150;
+    if(a.status==='funded') xp += 400;
+    if(a.status==='failed') xp += 20;
+  });
+  xp += (state.goals.payoutHistory||[]).reduce(function(s,p){return s + Math.min(200, (Number(p.amount)||0)/50);},0);
+  xp += state.journal.length * 15;
+  xp += Object.keys(state.achievementsUnlocked).length * 120;
+  return Math.round(xp);
+}
+function levelFromXP(xp){ return Math.max(1, Math.floor(Math.sqrt(xp/60)) + 1); }
+function xpForLevel(lv){ return Math.pow(lv-1,2)*60; }
+
+function snapshot(){
+  var allocTotal = computeAllocTotal();
+  var payoutMTD = computePayoutMTD();
+  return { accounts: state.accounts, goals: state.goals, journal: state.journal, allocTotal: allocTotal, payoutMTD: payoutMTD };
+}
+
+/* =========================================================
+   RENDER: HUD
+   ========================================================= */
+function renderHUD(){
+  var snap = snapshot();
+  var xp = computeXP();
+  var lv = levelFromXP(xp);
+  var curFloor = xpForLevel(lv), nextFloor = xpForLevel(lv+1);
+  var lvPct = Math.min(100, Math.round(100*(xp-curFloor)/Math.max(1,(nextFloor-curFloor))));
+
+  document.getElementById('hud-alloc').textContent = fmtMoney(snap.allocTotal);
+  document.getElementById('hud-alloc-bar').style.width = Math.min(100, 100*snap.allocTotal/state.goals.allocationTarget) + '%';
+
+  document.getElementById('hud-personal').textContent = fmtMoney(state.goals.personalCapitalCurrent||0);
+  document.getElementById('hud-personal-bar').style.width = Math.min(100, 100*(state.goals.personalCapitalCurrent||0)/state.goals.personalCapitalTarget) + '%';
+
+  document.getElementById('hud-payout').textContent = fmtMoney(snap.payoutMTD);
+  document.getElementById('hud-payout-bar').style.width = Math.min(100, 100*snap.payoutMTD/state.goals.monthlyPayoutTarget) + '%';
+
+  document.getElementById('hud-level').textContent = 'LV. ' + lv;
+  document.getElementById('hud-xp-sub').textContent = xp + ' XP';
+  document.getElementById('hud-xp-bar').style.width = lvPct + '%';
+
+  document.getElementById('hub-rank').textContent = 'ACCOUNTS DEPLOYED: ' + state.accounts.length + ' · LEVEL ' + lv;
+}
+
+/* =========================================================
+   RENDER: Accounts
+   ========================================================= */
+function ruleProgress(a){
+  var rows = [];
+  var equity = Number(a.currentEquity)||Number(a.size)||0;
+  var size = Number(a.size)||1;
+  var startEq = Number(a.size)||0;
+  var profitPct = ((equity-startEq)/size)*100;
+  var targetPct = Number(a.rules&&a.rules.profitTarget)||8;
+  rows.push({label:'Profit', pct: Math.max(0,Math.min(100,100*profitPct/targetPct)), num: profitPct.toFixed(1)+'% / '+targetPct+'%', level: profitPct>=targetPct?'ok':(profitPct>0?'warn':'bad')});
+
+  var ddUsedPct = Number(a.ddUsedPct)||0;
+  var maxDD = Number(a.rules&&a.rules.maxDD)||10;
+  rows.push({label:'Drawdown Used', pct: Math.max(0,Math.min(100,100*ddUsedPct/maxDD)), num: ddUsedPct.toFixed(1)+'% / '+maxDD+'%', level: ddUsedPct/maxDD>0.8?'bad':(ddUsedPct/maxDD>0.5?'warn':'ok')});
+
+  var daysTraded = Number(a.daysTraded)||0;
+  var minDays = Number(a.rules&&a.rules.minDays)||0;
+  if(minDays>0){
+    rows.push({label:'Days Traded', pct: Math.max(0,Math.min(100,100*daysTraded/minDays)), num: daysTraded+' / '+minDays, level: daysTraded>=minDays?'ok':'warn'});
+  }
+  return rows;
+}
+
+function renderAccounts(){
+  var list = document.getElementById('accounts-list');
+  if(state.accounts.length===0){
+    list.innerHTML = '<div class="empty-hint">No accounts deployed yet. Add your first challenge above.</div>';
+    return;
+  }
+  var html = '';
+  state.accounts.forEach(function(a){
+    var rows = ruleProgress(a);
+    html += '<div class="card acct-card status-'+a.status+'">';
+    html += '<div class="card-row"><div><div class="acct-firm">'+esc(a.firm)+'</div><div class="acct-meta">'+fmtMoney(a.size)+' · '+esc(a.phase==='p1'?'Phase 1':a.phase==='p2'?'Phase 2':'Funded')+'</div></div>';
+    html += '<span class="status-pill status-'+a.status+'">'+esc(a.status)+'</span></div>';
+    html += '<div class="rule-bars">';
+    rows.forEach(function(r){
+      html += '<div class="rule-bar-row"><span class="rule-bar-label">'+r.label+'</span><div class="rule-bar-track"><div class="rule-bar-fill '+r.level+'" style="width:'+r.pct+'%"></div></div><span class="rule-bar-num">'+r.num+'</span></div>';
+    });
+    html += '</div>';
+    html += '<div style="margin-top:12px; display:flex; gap:8px;">';
+    html += '<button class="btn secondary small" data-edit="'+a.id+'">Edit</button>';
+    if(a.status!=='funded') html += '<button class="btn secondary small" data-advance="'+a.id+'">Mark Passed / Funded</button>';
+    html += '<button class="btn danger small" data-fail="'+a.id+'">Mark Failed</button>';
+    html += '<button class="btn danger small" data-del="'+a.id+'">Delete</button>';
+    html += '</div></div>';
+  });
+  list.innerHTML = html;
+
+  list.querySelectorAll('[data-edit]').forEach(function(btn){ btn.onclick=function(){ openAccountForm(btn.getAttribute('data-edit')); }; });
+  list.querySelectorAll('[data-advance]').forEach(function(btn){ btn.onclick=function(){ advanceAccount(btn.getAttribute('data-advance')); }; });
+  list.querySelectorAll('[data-fail]').forEach(function(btn){ btn.onclick=function(){ setAccountStatus(btn.getAttribute('data-fail'),'failed'); }; });
+  list.querySelectorAll('[data-del]').forEach(function(btn){ btn.onclick=function(){ deleteAccount(btn.getAttribute('data-del')); }; });
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function openAccountForm(id){
+  var a = id ? state.accounts.find(function(x){return x.id===id;}) : null;
+  var firm = prompt('Firm name:', a?a.firm:'');
+  if(firm===null) return;
+  var size = prompt('Account size ($):', a?a.size:'100000');
+  if(size===null) return;
+  var profitTarget = prompt('Profit target (%):', a&&a.rules?a.rules.profitTarget:'8');
+  var maxDD = prompt('Max drawdown (%):', a&&a.rules?a.rules.maxDD:'10');
+  var minDays = prompt('Minimum trading days (0 if none):', a&&a.rules?a.rules.minDays:'0');
+  var phase = a?a.phase:'p1';
+
+  var data = {
+    firm: firm, size: Number(size)||0,
+    rules: { profitTarget: Number(profitTarget)||8, maxDD: Number(maxDD)||10, minDays: Number(minDays)||0 },
+    phase: phase, status: a?a.status:'challenge',
+    currentEquity: a?a.currentEquity:Number(size)||0,
+    ddUsedPct: a?a.ddUsedPct:0,
+    daysTraded: a?a.daysTraded:0,
+    createdAt: a?a.createdAt:new Date().toISOString()
+  };
+  saveAccount(id, data);
+}
+function saveAccount(id, data){
+  if(!db){ toast('Storage unavailable in this view.'); return; }
+  var ref = id ? db.collection('accounts').doc(id) : db.collection('accounts').doc();
+  ref.set(data).then(function(){ toast(id?'Account updated':'Account deployed'); });
+}
+function advanceAccount(id){
+  var a = state.accounts.find(function(x){return x.id===id;});
+  if(!a) return;
+  if(a.phase==='p1'){ db.collection('accounts').doc(id).update({phase:'p2', ddUsedPct:0, daysTraded:0}).then(function(){toast('Advanced to Phase 2');}); }
+  else { db.collection('accounts').doc(id).update({status:'funded'}).then(function(){toast('Account FUNDED 🎉'); checkAchievements();}); }
+}
+function setAccountStatus(id, status){
+  db.collection('accounts').doc(id).update({status:status}).then(function(){toast('Marked '+status); checkAchievements();});
+}
+function deleteAccount(id){
+  if(!confirm('Delete this account permanently?')) return;
+  db.collection('accounts').doc(id).delete().then(function(){toast('Account removed');});
+}
+
+/* =========================================================
+   RENDER: Goals
+   ========================================================= */
+function renderGoals(){
+  var allocTotal = computeAllocTotal();
+  var payoutMTD = computePayoutMTD();
+  document.getElementById('g-alloc-cur').textContent = fmtMoney(allocTotal);
+  document.getElementById('g-alloc-fill').style.width = Math.min(100,100*allocTotal/state.goals.allocationTarget)+'%';
+  document.getElementById('g-personal-cur').textContent = fmtMoney(state.goals.personalCapitalCurrent||0);
+  document.getElementById('g-personal-fill').style.width = Math.min(100,100*(state.goals.personalCapitalCurrent||0)/state.goals.personalCapitalTarget)+'%';
+  document.getElementById('g-payout-cur').textContent = fmtMoney(payoutMTD);
+  document.getElementById('g-payout-fill').style.width = Math.min(100,100*payoutMTD/state.goals.monthlyPayoutTarget)+'%';
+
+  var hist = (state.goals.payoutHistory||[]).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  var histEl = document.getElementById('payout-history');
+  if(hist.length===0){ histEl.innerHTML = '<div class="empty-hint">No payouts logged yet.</div>'; }
+  else {
+    histEl.innerHTML = hist.map(function(p){ return '<div class="card" style="display:flex;justify-content:space-between;padding:12px 16px;"><span class="acct-meta">'+esc(p.date)+'</span><b style="font-family:var(--font-mono);color:var(--amber);">'+fmtMoney(p.amount)+'</b></div>'; }).join('');
+  }
+}
+
+/* =========================================================
+   RENDER: Achievements
+   ========================================================= */
+function checkAchievements(){
+  var snap = snapshot();
+  var newlyUnlocked = [];
+  ACHIEVEMENTS.forEach(function(ach){
+    var already = state.achievementsUnlocked[ach.id];
+    if(!already && ach.test(snap)){
+      newlyUnlocked.push(ach);
+    }
+  });
+  if(newlyUnlocked.length>0 && db){
+    var updates = {};
+    newlyUnlocked.forEach(function(a){ updates['unlocked.'+a.id] = new Date().toISOString(); });
+    db.doc('achievements/state').set(Object.assign({}, {unlocked: Object.assign({}, unlockedRaw(), (function(){var o={};newlyUnlocked.forEach(function(a){o[a.id]=new Date().toISOString();});return o;})())})).then(function(){
+      newlyUnlocked.forEach(function(a){ toast('🏅 Medal earned: '+a.name); });
+    });
+  }
+}
+function unlockedRaw(){ return state.achievementsUnlocked || {}; }
+
+function renderAchievements(){
+  var grid = document.getElementById('ach-grid');
+  grid.innerHTML = ACHIEVEMENTS.map(function(a){
+    var unlocked = state.achievementsUnlocked[a.id];
+    return '<div class="ach-card '+(unlocked?'':'locked')+'"><div class="ach-icon">'+a.icon+'</div><div><div class="ach-name">'+esc(a.name)+'</div><div class="ach-desc">'+esc(a.desc)+'</div>' + (unlocked?'<div class="ach-date">Unlocked '+new Date(unlocked).toLocaleDateString()+'</div>':'') + '</div></div>';
+  }).join('');
+}
+
+/* =========================================================
+   RENDER: Journal
+   ========================================================= */
+function renderJournal(){
+  var list = document.getElementById('journal-list');
+  if(state.journal.length===0){ list.innerHTML = '<div class="empty-hint">No entries yet.</div>'; return; }
+  var sorted = state.journal.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  list.innerHTML = sorted.map(function(j){
+    return '<div class="journal-entry"><div class="je-date">'+new Date(j.date).toLocaleString()+'</div><div class="je-title">'+esc(j.title)+'</div><div class="je-body">'+esc(j.body)+'</div></div>';
+  }).join('');
+}
+
+/* =========================================================
+   3D HUB SCENE
+   ========================================================= */
+var scene, camera, renderer, coreMesh, nodeGroup, clock;
+function initHub(){
+  var wrap = document.getElementById('hub-canvas-wrap');
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(52, wrap.clientWidth/wrap.clientHeight, 0.1, 100);
+  camera.position.set(0, 3.2, 9.5);
+  camera.lookAt(0,0,0);
+
+  renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio||1));
+  wrap.appendChild(renderer.domElement);
+
+  var ambient = new THREE.AmbientLight(0x334455, 1.4);
+  scene.add(ambient);
+  var pointLight = new THREE.PointLight(0xE8A33D, 2.2, 30);
+  pointLight.position.set(4,5,4);
+  scene.add(pointLight);
+  var pointLight2 = new THREE.PointLight(0x45C4D6, 1.4, 30);
+  pointLight2.position.set(-5,-2,3);
+  scene.add(pointLight2);
+
+  // starfield
+  var starGeo = new THREE.BufferGeometry();
+  var starCount = 700;
+  var positions = new Float32Array(starCount*3);
+  for(var i=0;i<starCount;i++){
+    var r = 18+Math.random()*22;
+    var theta = Math.random()*Math.PI*2, phi = Math.acos(2*Math.random()-1);
+    positions[i*3] = r*Math.sin(phi)*Math.cos(theta);
+    positions[i*3+1] = r*Math.sin(phi)*Math.sin(theta);
+    positions[i*3+2] = r*Math.cos(phi);
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  var starMat = new THREE.PointsMaterial({color:0x445566, size:0.06});
+  scene.add(new THREE.Points(starGeo, starMat));
+
+  // core (player)
+  var coreGeo = new THREE.IcosahedronGeometry(1.05, 1);
+  var coreMat = new THREE.MeshStandardMaterial({color:0xE8A33D, emissive:0x5A3E12, roughness:0.35, metalness:0.4, flatShading:true});
+  coreMesh = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(coreMesh);
+
+  var ringGeo = new THREE.RingGeometry(1.7, 1.76, 64);
+  var ringMat = new THREE.MeshBasicMaterial({color:0x45C4D6, side:THREE.DoubleSide, transparent:true, opacity:0.35});
+  var ring = new THREE.Mesh(ringGeo, ringMat);
+  ring.rotation.x = Math.PI/2.3;
+  scene.add(ring);
+
+  nodeGroup = new THREE.Group();
+  scene.add(nodeGroup);
+
+  clock = new THREE.Clock();
+  window.addEventListener('resize', onHubResize);
+  renderer.domElement.addEventListener('click', onHubClick);
+  animateHub();
+}
+function onHubResize(){
+  var wrap = document.getElementById('hub-canvas-wrap');
+  if(!renderer || wrap.clientWidth===0) return;
+  camera.aspect = wrap.clientWidth/wrap.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+}
+var nodeMeshes = [];
+function rebuildNodes(){
+  if(!nodeGroup) return;
+  nodeMeshes.forEach(function(m){ nodeGroup.remove(m.mesh); });
+  nodeMeshes = [];
+  var n = state.accounts.length;
+  state.accounts.forEach(function(a, i){
+    var angle = (i/Math.max(1,n)) * Math.PI*2;
+    var radius = 3.6;
+    var color = a.status==='funded' ? 0x45C98A : a.status==='failed' ? 0xEE6868 : 0x45C4D6;
+    var size = 0.22 + Math.min(0.28, (Number(a.size)||0)/500000);
+    var geo = new THREE.SphereGeometry(size, 20, 20);
+    var mat = new THREE.MeshStandardMaterial({color:color, emissive:color, emissiveIntensity:0.28, roughness:0.4});
+    var mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(Math.cos(angle)*radius, Math.sin(i*1.7)*0.6, Math.sin(angle)*radius);
+    mesh.userData.account = a;
+    nodeGroup.add(mesh);
+    nodeMeshes.push({mesh:mesh, angle:angle, radius:radius, account:a});
+  });
+}
+function animateHub(){
+  requestAnimationFrame(animateHub);
+  if(!renderer) return;
+  var t = clock.getElapsedTime();
+  if(coreMesh){ coreMesh.rotation.y = t*0.25; coreMesh.rotation.x = t*0.12; }
+  nodeGroup.rotation.y = t*0.09;
+  nodeMeshes.forEach(function(nm, i){
+    nm.mesh.position.y = Math.sin(t*0.6 + i)*0.4;
+  });
+  camera.position.x = Math.sin(t*0.05)*9.5;
+  camera.position.z = Math.cos(t*0.05)*9.5;
+  camera.lookAt(0,0,0);
+  renderer.render(scene, camera);
+}
+var raycaster, mouse;
+function onHubClick(ev){
+  if(!raycaster){ raycaster = new THREE.Raycaster(); mouse = new THREE.Vector2(); }
+  var rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((ev.clientX-rect.left)/rect.width)*2-1;
+  mouse.y = -((ev.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse, camera);
+  var hits = raycaster.intersectObjects(nodeMeshes.map(function(m){return m.mesh;}));
+  var panel = document.getElementById('node-detail');
+  if(hits.length>0){
+    var a = hits[0].object.userData.account;
+    document.getElementById('nd-title').textContent = a.firm;
+    document.getElementById('nd-status').textContent = a.status;
+    document.getElementById('nd-size').textContent = fmtMoney(a.size);
+    var pnl = (Number(a.currentEquity)||Number(a.size)) - Number(a.size);
+    document.getElementById('nd-pnl').textContent = (pnl>=0?'+':'') + fmtMoney(pnl);
+    panel.classList.add('show');
+  } else {
+    panel.classList.remove('show');
+  }
+}
+
+/* =========================================================
+   JARVIS
+   ========================================================= */
+function jarvisSystemPrompt(){
+  var snap = snapshot();
+  var acctSummary = snap.accounts.map(function(a){
+    return '- '+a.firm+': '+fmtMoney(a.size)+', phase='+a.phase+', status='+a.status+', ddUsed='+(a.ddUsedPct||0)+'%';
+  }).join('\n') || '(no accounts yet)';
+  var journalSummary = state.journal.slice(-5).map(function(j){ return '- '+ (j.date||'').slice(0,10) + ': ' + j.title; }).join('\n') || '(no entries yet)';
+
+  return "You are Jarvis, a calm, sharp trading-career copilot for a solo prop trader. You know their strategy and business model deeply. " +
+    "STRATEGY CONTEXT: " + OESM_CONTEXT + "\n\nPROP FARMING CONTEXT: " + PROP_FARMING_CONTEXT + "\n\n" +
+    "CURRENT STATE:\nGoal: $2,000,000 total allocation, $100,000 personal trading capital, $100,000/month payouts.\n" +
+    "Total funded allocation right now: " + fmtMoney(snap.allocTotal) + "\nPersonal capital: " + fmtMoney(state.goals.personalCapitalCurrent||0) +
+    "\nMonthly payouts (this month): " + fmtMoney(snap.payoutMTD) + "\n\nACCOUNTS:\n" + acctSummary +
+    "\n\nRECENT JOURNAL:\n" + journalSummary +
+    "\n\nBe direct and grounded, not hype-y. When numbers are thin (small sample sizes, single sessions), say so plainly, the way a good trading mentor would. " +
+    "Use the tools available to you to look up specifics if the user asks about a particular account or entry. Keep replies concise unless asked to go deep.";
+}
+
+function jarvisTools(){
+  return [
+    {
+      name: 'getAccounts',
+      description: 'Returns the full list of the user\\'s prop firm accounts with all fields (firm, size, phase, status, rules, equity, drawdown used, days traded).',
+      inputSchema: {type:'object', properties:{}},
+      execute: function(){ return state.accounts; }
+    },
+    {
+      name: 'getJournalEntries',
+      description: 'Returns journal entries, optionally limited to the most recent N. Input: {limit?: number}',
+      inputSchema: {type:'object', properties:{limit:{type:'number'}}},
+      execute: function(input){
+        var lim = Number(input&&input.limit)||20;
+        return state.journal.slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');}).slice(0,lim);
+      }
+    },
+    {
+      name: 'getGoalsAndPayouts',
+      description: 'Returns goal targets, current progress, and full payout history.',
+      inputSchema: {type:'object', properties:{}},
+      execute: function(){ return {goals: state.goals, allocTotal: computeAllocTotal(), payoutMTD: computePayoutMTD()}; }
+    }
+  ];
+}
+
+function addJarvisMsg(role, text){
+  var log = document.getElementById('jarvis-log');
+  var div = document.createElement('div');
+  div.className = 'jmsg '+role;
+  div.innerHTML = '<div class="jlabel">'+(role==='user'?'YOU':'JARVIS')+'</div><div class="jbubble"></div>';
+  div.querySelector('.jbubble').textContent = text;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div.querySelector('.jbubble');
+}
+
+async function sendJarvis(){
+  var input = document.getElementById('jarvis-input');
+  var text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  addJarvisMsg('user', text);
+
+  if(!sampleCap){
+    addJarvisMsg('assistant', 'Jarvis isn\\'t available in this view — the AI capability isn\\'t granted here.');
+    return;
+  }
+  var bubble = addJarvisMsg('assistant', 'Thinking...');
+  jarvisTurns.push({role:'user', content: text});
+  var turns = [{role:'user', content: jarvisSystemPrompt()}].concat(jarvisTurns);
+  try{
+    var result = await sampleCap(turns, {
+      modelTier: 'default',
+      cache: false,
+      tools: jarvisTools(),
+      onText: function(u){ bubble.textContent = u.text; document.getElementById('jarvis-log').scrollTop = 999999; }
+    });
+    jarvisTurns.push({role:'assistant', content: result.text});
+    bubble.textContent = result.text;
+  } catch(e){
+    if(e.code==='not_granted'){ bubble.textContent = 'You declined to let this page ask Claude. Reload and allow it to chat with Jarvis.'; }
+    else { bubble.textContent = (e.text || '') + '\\n[Jarvis error: '+e.code+']'; }
+  }
+}
+
+/* =========================================================
+   NAV / VIEW SWITCH
+   ========================================================= */
+function showView(name){
+  document.querySelectorAll('.view').forEach(function(v){v.classList.remove('active');});
+  document.getElementById(name+'-view').classList.add('active');
+  document.querySelectorAll('.rail-btn').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-view')===name);});
+  if(name==='hub') setTimeout(onHubResize, 30);
+}
+document.querySelectorAll('.rail-btn').forEach(function(btn){
+  btn.onclick = function(){ showView(btn.getAttribute('data-view')); };
+});
+
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+/* =========================================================
+   INIT / DB WIRING
+   ========================================================= */
+async function boot(){
+  initHub();
+  renderHUD(); renderAccounts(); renderGoals(); renderAchievements(); renderJournal();
+
+  if(!window.claude || !window.claude.use){
+    document.getElementById('hub-callsign').textContent = 'PREVIEW MODE';
+    document.getElementById('hub-rank').textContent = 'Publish this page to enable saving, achievements & Jarvis.';
+    return;
+  }
+
+  userCap = await window.claude.use('user').catch(function(){return null;});
+  db = await window.claude.use('db').catch(function(){return null;});
+  sampleCap = await window.claude.use('sample').catch(function(){return null;});
+
+  if(userCap){ uid = await userCap.id().catch(function(){return null;}); }
+
+  if(db){
+    db.collection('accounts').onSnapshot(function(snap){
+      state.accounts = snap.docs.map(function(d){ var o=d.data(); o.id=d.id; return o; });
+      renderHUD(); renderAccounts(); rebuildNodes(); checkAchievements();
+    }, function(e){ console.warn('accounts sub error', e); });
+
+    db.doc('goals/main').onSnapshot(function(snap){
+      if(snap.exists){
+        var d = snap.data();
+        state.goals = Object.assign({allocationTarget:2000000, personalCapitalTarget:100000, monthlyPayoutTarget:100000, personalCapitalCurrent:0, payoutHistory:[]}, d);
+      }
+      renderHUD(); renderGoals(); checkAchievements();
+    }, function(e){ console.warn('goals sub error', e); });
+
+    db.collection('journal').onSnapshot(function(snap){
+      state.journal = snap.docs.map(function(d){ var o=d.data(); o.id=d.id; return o; });
+      renderHUD(); renderJournal(); checkAchievements();
+    }, function(e){ console.warn('journal sub error', e); });
+
+    db.doc('achievements/state').onSnapshot(function(snap){
+      state.achievementsUnlocked = (snap.exists && snap.data().unlocked) || {};
+      renderAchievements(); renderHUD();
+    }, function(e){ console.warn('ach sub error', e); });
+  }
+
+  document.getElementById('add-account-btn').onclick = function(){ openAccountForm(null); };
+
+  document.getElementById('log-payout-btn').onclick = function(){
+    var amt = Number(document.getElementById('payout-amount-input').value)||0;
+    var date = document.getElementById('payout-date-input').value || new Date().toISOString().slice(0,10);
+    if(amt<=0){ toast('Enter a payout amount first'); return; }
+    var hist = (state.goals.payoutHistory||[]).slice();
+    hist.push({amount:amt, date:date});
+    var payload = Object.assign({}, state.goals, {payoutHistory:hist});
+    db.doc('goals/main').set(payload).then(function(){
+      toast('Payout logged: '+fmtMoney(amt));
+      document.getElementById('payout-amount-input').value='';
+    });
+  };
+
+  document.getElementById('personal-input').onchange = function(e){
+    var v = Number(e.target.value)||0;
+    var payload = Object.assign({}, state.goals, {personalCapitalCurrent:v});
+    db.doc('goals/main').set(payload).then(function(){ toast('Personal capital updated'); });
+  };
+
+  document.getElementById('add-journal-btn').onclick = function(){
+    var title = document.getElementById('journal-title-input').value.trim();
+    var body = document.getElementById('journal-body-input').value.trim();
+    if(!title && !body){ toast('Write something first'); return; }
+    db.collection('journal').add({title:title||'Untitled', body:body, date:new Date().toISOString()}).then(function(){
+      document.getElementById('journal-title-input').value='';
+      document.getElementById('journal-body-input').value='';
+      toast('Entry saved');
+    });
+  };
+
+  document.getElementById('jarvis-send-btn').onclick = sendJarvis;
+  document.getElementById('jarvis-input').addEventListener('keydown', function(e){
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendJarvis(); }
+  });
+  addJarvisMsg('assistant', "Command deck online. I know your OESM strategy, the prop-farming model, and everything logged in your fleet, goals and journal. Ask me anything — how close you are to a milestone, whether an account's drawdown usage looks risky, or just talk through a session.");
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
